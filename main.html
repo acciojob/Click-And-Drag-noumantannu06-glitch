@@ -35,7 +35,69 @@
   </div>
 
 <script>
-//Your code goes here 
+//Your code goes here
+	const todos = ['Buy groceries', 'Walk dog', 'Code app', 'Read book'];
+        const container = document.getElementById('todoContainer');
+
+        function renderTodos() {
+            container.innerHTML = '';
+            todos.forEach((text, i) => {
+                const item = document.createElement('div');
+                item.className = 'todo-item';
+                item.textContent = text;
+                item.style.left = `${20 + (i % 2) * 280}px`;
+                item.style.top = `${20 + Math.floor(i / 2) * 80}px`;
+                item.draggable = true;
+                makeDraggable(item);
+                container.appendChild(item);
+            });
+        }
+
+        function addTodo() {
+            const input = document.getElementById('newTodo');
+            if (input.value.trim()) {
+                todos.push(input.value.trim());
+                input.value = '';
+                renderTodos();
+            }
+        }
+
+        function makeDraggable(item) {
+            let isDragging = false, shiftX = 0, shiftY = 0;
+
+            item.onmousedown = (e) => {
+                e.preventDefault();
+                isDragging = true;
+                const rect = item.getBoundingClientRect();
+                shiftX = e.clientX - rect.left;
+                shiftY = e.clientY - rect.top;
+                item.style.zIndex = 1000;
+                item.style.transition = 'none';
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            };
+
+            function onMouseMove(e) {
+                if (!isDragging) return;
+                let newLeft = e.clientX - shiftX - container.getBoundingClientRect().left;
+                let newTop = e.clientY - shiftY - container.getBoundingClientRect().top;
+                const contRect = container.getBoundingClientRect();
+                newLeft = Math.max(0, Math.min(newLeft, contRect.width - item.offsetWidth));
+                newTop = Math.max(0, Math.min(newTop, contRect.height - item.offsetHeight));
+                item.style.left = `${newLeft}px`;
+                item.style.top = `${newTop}px`;
+            }
+
+            function onMouseUp() {
+                isDragging = false;
+                item.style.zIndex = '';
+                item.style.transition = 'box-shadow 0.2s, transform 0.2s';
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            }
+        }
+
+        renderTodos();
 </script>
 
   </body>
