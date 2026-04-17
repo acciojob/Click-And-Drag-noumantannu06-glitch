@@ -36,103 +36,56 @@
 
 <script>
 //Your code goes here
-	function initApp() {
-            const todos = ['Buy groceries', 'Walk dog', 'Code app', 'Read book'];
-            const container = document.getElementById('todoContainer');
+	<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.querySelector('.items');
+    const items = document.querySelectorAll('.item');
+    
+    items.forEach(item => makeDraggable(item, container));
+    
+    function makeDraggable(item, container) {
+        let isDragging = false;
+        
+        item.onmousedown = (e) => {
+            e.preventDefault();
+            isDragging = true;
             
-            // Null checks
-            if (!container) {
-                console.error('Container not found');
-                return;
-            }
-
-            function renderTodos() {
-                container.innerHTML = '';
-                todos.forEach((text, i) => {
-                    const item = document.createElement('div');
-                    item.className = 'todo-item';
-                    item.textContent = text;
-                    item.style.left = `${20 + (i % 2) * 280}px`;
-                    item.style.top = `${20 + Math.floor(i / 2) * 80}px`;
-                    makeDraggable(item);
-                    container.appendChild(item);
-                });
-            }
-
-            function addTodo() {
-                const input = document.getElementById('newTodo');
-                const btn = document.getElementById('addBtn');
-                if (!input || !btn) return; // SAFE: No crash
+            const rect = item.getBoundingClientRect();
+            const contRect = container.getBoundingClientRect();
+            const shiftX = e.clientX - rect.left;
+            const shiftY = e.clientY - rect.top;
+            
+            item.style.zIndex = 1000;
+            item.style.position = 'absolute';
+            item.style.transition = 'none';
+            
+            const moveHandler = (e2) => {
+                if (!isDragging) return;
                 
-                if (input.value.trim()) {
-                    todos.push(input.value.trim());
-                    input.value = '';
-                    renderTodos();
-                }
-            }
-
-            function makeDraggable(item) {
-    item.style.position = 'absolute'; // Ensure
-    
-    item.addEventListener('mousedown', handleMouseDown);
-    
-    function handleMouseDown(e) {
-        e.preventDefault();
-        
-        // Create NATIVE MouseEvent (Cypress fires this)
-        const mouseDownEvent = new MouseEvent('mousedown', {
-            bubbles: true, cancelable: true, clientX: e.clientX, clientY: e.clientY
-        });
-        item.dispatchEvent(mouseDownEvent);
-        
-        const rect = item.getBoundingClientRect();
-        const contRect = container.getBoundingClientRect();
-        const shiftX = e.clientX - rect.left;
-        const shiftY = e.clientY - rect.top;
-        
-        item.style.zIndex = 1000;
-        item.style.transition = 'none';
-        
-        function handleMouseMove(e2) {
-            const newLeft = e2.clientX - shiftX - contRect.left;
-            const newTop = e2.clientY - shiftY - contRect.top;
-            const maxLeft = container.offsetWidth - item.offsetWidth;
-            const maxTop = container.offsetHeight - item.offsetHeight;
+                let newLeft = e2.clientX - shiftX - contRect.left;
+                let newTop = e2.clientY - shiftY - contRect.top;
+                
+                const maxLeft = container.offsetWidth - rect.width;
+                const maxTop = container.offsetHeight - rect.height;
+                
+                item.style.left = Math.max(0, Math.min(newLeft, maxLeft)) + 'px';
+                item.style.top = Math.max(0, Math.min(newTop, maxTop)) + 'px';
+            };
             
-            item.style.left = Math.max(0, Math.min(newLeft, maxLeft)) + 'px';
-            item.style.top = Math.max(0, Math.min(newTop, maxTop)) + 'px';
-        }
-        
-        function handleMouseUp() {
-            item.style.zIndex = '';
-            item.style.transition = 'all 0.2s';
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
-        }
-        
-        // Use addEventListener (fires for Cypress)
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
+            const upHandler = () => {
+                isDragging = false;
+                item.style.zIndex = '';
+                item.style.transition = 'all 0.2s ease';
+                document.removeEventListener('mousemove', moveHandler);
+                document.removeEventListener('mouseup', upHandler);
+            };
+            
+            document.addEventListener('mousemove', moveHandler);
+            document.addEventListener('mouseup', upHandler);
+        };
     }
-}
-
-            // Event listeners SAFE
-            const input = document.getElementById('newTodo');
-            const btn = document.getElementById('addBtn');
-            if (input && btn) {
-                btn.onclick = addTodo;
-                input.onkeypress = (e) => { if (e.key === 'Enter') addTodo(); };
-            }
-
-            renderTodos();
-        }
-
-        // INIT: Multiple safe checks (Cypress-proof)
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initApp);
-        } else {
-            initApp();
-        }
+});
+</script>
 </script>
 
   </body>
