@@ -72,34 +72,48 @@
             }
 
             function makeDraggable(item) {
-                let isDragging = false, shiftX = 0, shiftY = 0;
-                item.onmousedown = (e) => {
-                    e.preventDefault();
-                    isDragging = true;
-                    const rect = item.getBoundingClientRect();
-                    shiftX = e.clientX - rect.left;
-                    shiftY = e.clientY - rect.top;
-                    item.style.zIndex = 1000;
-                    item.style.transition = 'none';
-                    document.onmousemove = (e2) => {
-                        if (!isDragging) return;
-                        let newLeft = e2.clientX - shiftX - container.getBoundingClientRect().left;
-                        let newTop = e2.clientY - shiftY - container.getBoundingClientRect().top;
-                        const contRect = container.getBoundingClientRect();
-                        newLeft = Math.max(0, Math.min(newLeft, contRect.width - item.offsetWidth));
-                        newTop = Math.max(0, Math.min(newTop, contRect.height - item.offsetHeight));
-                        item.style.left = newLeft + 'px';
-                        item.style.top = newTop + 'px';
-                    };
-                    document.onmouseup = () => {
-                        isDragging = false;
-                        item.style.zIndex = '';
-                        item.style.transition = 'all 0.2s';
-                        document.onmousemove = null;
-                        document.onmouseup = null;
-                    };
-                };
-            }
+             let isDragging = false, startX = 0, startY = 0;
+    
+    item.onmousedown = (e) => {
+        e.preventDefault();
+        isDragging = true;
+        
+        // CACHE container rect ONCE (Cypress-safe)
+        const contRect = container.getBoundingClientRect();
+        const rect = item.getBoundingClientRect();
+        startX = e.clientX - rect.left;
+        startY = e.clientY - rect.top;
+        
+        item.style.zIndex = 1000;
+        item.style.transition = 'none';
+        
+        document.onmousemove = (e2) => {
+            if (!isDragging) return;
+            
+            // USE CACHED rect (no getBoundingClientRect() during drag)
+            let newLeft = e2.clientX - startX - contRect.left;
+            let newTop = e2.clientY - startY - contRect.top;
+            
+            // Bounds using FIXED sizes (no live rect)
+            const maxLeft = container.offsetWidth - item.offsetWidth;
+            const maxTop = container.offsetHeight - item.offsetHeight;
+            
+            newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+            newTop = Math.max(0, Math.min(newTop, maxTop));
+            
+            item.style.left = newLeft + 'px';
+            item.style.top = newTop + 'px';
+        };
+        
+        document.onmouseup = () => {
+            isDragging = false;
+            item.style.zIndex = '';
+            item.style.transition = 'all 0.2s';
+            document.onmousemove = null;
+            document.onmouseup = null;
+        };
+    };
+}
 
             // Event listeners SAFE
             const input = document.getElementById('newTodo');
