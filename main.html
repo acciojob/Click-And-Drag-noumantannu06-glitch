@@ -72,47 +72,48 @@
             }
 
             function makeDraggable(item) {
-             let isDragging = false, startX = 0, startY = 0;
+    item.style.position = 'absolute'; // Ensure
     
-    item.onmousedown = (e) => {
+    item.addEventListener('mousedown', handleMouseDown);
+    
+    function handleMouseDown(e) {
         e.preventDefault();
-        isDragging = true;
         
-        // CACHE container rect ONCE (Cypress-safe)
-        const contRect = container.getBoundingClientRect();
+        // Create NATIVE MouseEvent (Cypress fires this)
+        const mouseDownEvent = new MouseEvent('mousedown', {
+            bubbles: true, cancelable: true, clientX: e.clientX, clientY: e.clientY
+        });
+        item.dispatchEvent(mouseDownEvent);
+        
         const rect = item.getBoundingClientRect();
-        startX = e.clientX - rect.left;
-        startY = e.clientY - rect.top;
+        const contRect = container.getBoundingClientRect();
+        const shiftX = e.clientX - rect.left;
+        const shiftY = e.clientY - rect.top;
         
         item.style.zIndex = 1000;
         item.style.transition = 'none';
         
-        document.onmousemove = (e2) => {
-            if (!isDragging) return;
-            
-            // USE CACHED rect (no getBoundingClientRect() during drag)
-            let newLeft = e2.clientX - startX - contRect.left;
-            let newTop = e2.clientY - startY - contRect.top;
-            
-            // Bounds using FIXED sizes (no live rect)
+        function handleMouseMove(e2) {
+            const newLeft = e2.clientX - shiftX - contRect.left;
+            const newTop = e2.clientY - shiftY - contRect.top;
             const maxLeft = container.offsetWidth - item.offsetWidth;
             const maxTop = container.offsetHeight - item.offsetHeight;
             
-            newLeft = Math.max(0, Math.min(newLeft, maxLeft));
-            newTop = Math.max(0, Math.min(newTop, maxTop));
-            
-            item.style.left = newLeft + 'px';
-            item.style.top = newTop + 'px';
-        };
+            item.style.left = Math.max(0, Math.min(newLeft, maxLeft)) + 'px';
+            item.style.top = Math.max(0, Math.min(newTop, maxTop)) + 'px';
+        }
         
-        document.onmouseup = () => {
-            isDragging = false;
+        function handleMouseUp() {
             item.style.zIndex = '';
             item.style.transition = 'all 0.2s';
-            document.onmousemove = null;
-            document.onmouseup = null;
-        };
-    };
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        }
+        
+        // Use addEventListener (fires for Cypress)
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+    }
 }
 
             // Event listeners SAFE
