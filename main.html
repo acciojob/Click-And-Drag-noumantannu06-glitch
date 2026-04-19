@@ -37,81 +37,60 @@
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const container = document.querySelector('.items');
-      const items = document.querySelectorAll('.item');
+      let draggedItem = null;
 
-      items.forEach(item => makeDraggable(item, container));
-
-      function makeDraggable(item, container) {
-        let isDragging = false;
-
+      function makeDraggable(item) {
         item.onmousedown = function (e) {
           e.preventDefault();
-          isDragging = true;
 
+          draggedItem = item;
+
+          // Lift item visually
           const rect = item.getBoundingClientRect();
           const contRect = container.getBoundingClientRect();
+
+          item.style.position = 'absolute';
+          item.style.zIndex = '1000';
+          item.style.transition = 'none';
+          item.style.left = (rect.left - contRect.left) + 'px';
+          item.style.top = (rect.top - contRect.top) + 'px';
+
           const shiftX = e.clientX - rect.left;
           const shiftY = e.clientY - rect.top;
 
-          // Save original index before dragging
-          const originalIndex = Array.from(container.children).indexOf(item);
-          item.dataset.originalIndex = originalIndex;
-
-          // Make it absolute during drag
-          item.style.zIndex = 1000;
-          item.style.position = 'absolute';
-          item.style.transition = 'none';
-
-          item.style.left = rect.left - contRect.left + 'px';
-          item.style.top = rect.top - contRect.top + 'px';
-
           function moveHandler(e2) {
-            if (!isDragging) return;
+            if (!draggedItem) return;
 
-            let newLeft = e2.clientX - shiftX - contRect.left;
-            let newTop = e2.clientY - shiftY - contRect.top;
+            const newLeft = e2.clientX - shiftX - contRect.left;
+            const newTop = e2.clientY - shiftY - contRect.top;
 
             const maxLeft = container.offsetWidth - rect.width;
             const maxTop = container.offsetHeight - rect.height;
 
-            item.style.left = Math.max(0, Math.min(newLeft, maxLeft)) + 'px';
-            item.style.top = Math.max(0, Math.min(newTop, maxTop)) + 'px';
+            draggedItem.style.left = Math.max(0, Math.min(newLeft, maxLeft)) + 'px';
+            draggedItem.style.top = Math.max(0, Math.min(newTop, maxTop)) + 'px';
           }
 
           function upHandler() {
-            if (!isDragging) return;
+            if (!draggedItem) return;
 
-            isDragging = false;
-
-            // Reorder DOM using the drag target (nearest item)
             const dropTarget = document.elementFromPoint(e.clientX, e.clientY);
             const targetItem = dropTarget?.closest('.item');
 
-            if (targetItem && targetItem !== item && targetItem.parentNode === container) {
-              container.insertBefore(item, targetItem);
-            } else {
-              // Fallback: restore to original index
-              const originalIndex = parseInt(item.dataset.originalIndex || '0', 10);
-              const currentSiblings = Array.from(container.children);
-              const currentIndex = currentSiblings.indexOf(item);
-
-              if (originalIndex !== currentIndex) {
-                if (originalIndex < container.children.length) {
-                  container.insertBefore(item, container.children[originalIndex]);
-                } else {
-                  container.appendChild(item);
-                }
-              }
+            if (targetItem && targetItem !== draggedItem && targetItem.parentNode === container) {
+              // Reorder DOM: move dragged item before target
+              container.insertBefore(draggedItem, targetItem);
             }
 
-            // Reset styles
-            item.style.zIndex = '';
-            item.style.position = '';
-            item.style.left = '';
-            item.style.top = '';
-            item.style.transition = 'all 0.2s ease';
+            // Reset visual styling
+            draggedItem.style.position = '';
+            draggedItem.style.zIndex = '';
+            draggedItem.style.left = '';
+            draggedItem.style.top = '';
+            draggedItem.style.transition = 'all 0.2s ease';
 
-            // Clean up
+            draggedItem = null;
+
             document.removeEventListener('mousemove', moveHandler);
             document.removeEventListener('mouseup', upHandler);
           }
@@ -120,6 +99,9 @@
           document.addEventListener('mouseup', upHandler);
         };
       }
+
+      const items = document.querySelectorAll('.item');
+      items.forEach(makeDraggable);
     });
   </script>
 
