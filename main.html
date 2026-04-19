@@ -71,20 +71,48 @@ document.addEventListener('DOMContentLoaded', function() {
                 item.style.left = Math.max(0, Math.min(newLeft, maxLeft)) + 'px';
                 item.style.top = Math.max(0, Math.min(newTop, maxTop)) + 'px';
             };
-            
-            const upHandler = () => {
-                isDragging = false;
-                item.style.zIndex = '';
-                item.style.transition = 'all 0.2s ease';
-                document.removeEventListener('mousemove', moveHandler);
-                document.removeEventListener('mouseup', upHandler);
-            };
-            
-            document.addEventListener('mousemove', moveHandler);
-            document.addEventListener('mouseup', upHandler);
-        };
+			const upHandler = () => {
+    if (isDragging) {
+        // Find drop target (item under cursor or nearest)
+        const dropTarget = document.elementFromPoint(e.clientX, e.clientY);
+        const targetItem = dropTarget?.closest('.item');
+        
+        if (targetItem && targetItem !== item && targetItem.parentNode === container) {
+            // Insert before target to reorder
+            container.insertBefore(item, targetItem);
+        } else {
+            // Snap back to original position if no valid drop
+            // (Get original rect/sibling before drag, or use data attrs)
+        }
     }
-});
+    
+    isDragging = false;
+    item.style.zIndex = '';
+    item.style.position = '';
+    item.style.left = '';
+    item.style.top = '';
+    item.style.transition = 'all 0.2s ease';
+    
+    document.removeEventListener('mousemove', moveHandler);
+    document.removeEventListener('mouseup', upHandler);
+};
+For better UX/production, track original index/rect in data attrs on mousedown, calculate drop index from newLeft/newTop, and use insertBefore(container.children[dropIndex]). Reset position: absolute only during drag. This makes visual + functional drag work for tests.
+
+Test in headed browser first; timeouts often hit in headless due to fast events missing visual feedback/stability waits.
+
+Follow-ups
+
+How to add drag and drop with React
+
+Make drag and drop sortable list with JavaScript
+
+Fix drag drop issues in Cypress tests
+
+Add smooth animations to drag and drop UI
+
+Implement touch support for mobile drag and drop
+
+
 </script>
   </body>
 </html>
