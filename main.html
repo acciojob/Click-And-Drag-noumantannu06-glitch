@@ -74,9 +74,8 @@
           function upHandler() {
             if (!draggedItem) return;
 
-            const dropTarget = document.elementFromPoint(e.clientX, e.clientY);
+            const dropTarget = document.elementFromPoint(e2.clientX, e2.clientY);  // Use e2
             const targetItem = dropTarget?.closest('.item');
-
             if (targetItem && targetItem !== draggedItem && targetItem.parentNode === container) {
               // Reorder DOM: move dragged item before target
               container.insertBefore(draggedItem, targetItem);
