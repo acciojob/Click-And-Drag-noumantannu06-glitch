@@ -71,16 +71,16 @@
             draggedItem.style.top = Math.max(0, Math.min(newTop, maxTop)) + 'px';
           }
 
-          function upHandler() {
-            if (!draggedItem) return;
+          function upHandler(e2) {  // Add (e2) param - rename if desired, e.g., (e)
+           if (!draggedItem) return;
 
-            const dropTarget = document.elementFromPoint(e2.clientX, e2.clientY);  // Use e2
-            const targetItem = dropTarget?.closest('.item');
-            if (targetItem && targetItem !== draggedItem && targetItem.parentNode === container) {
-              // Reorder DOM: move dragged item before target
-              container.insertBefore(draggedItem, targetItem);
-            }
-
+          const dropTarget = document.elementFromPoint(e2.clientX, e2.clientY);  // Now e2 is passed from mouseup
+          const targetItem = dropTarget?.closest('.item');
+           if (targetItem && targetItem !== draggedItem && targetItem.parentNode === container) {
+             container.insertBefore(draggedItem, targetItem);
+           }
+          // Reset styling...
+         }
             // Reset visual styling
             draggedItem.style.position = '';
             draggedItem.style.zIndex = '';
